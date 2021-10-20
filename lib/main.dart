@@ -35,7 +35,127 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final int _counter = 0;
+  late String _text = '0'; // 显示当前输入的数字和计算结果
+  late String _beforeText = '0'; // 用于保存被加数
+  late bool _isResult = false; // 当前值是否为计算的结果
+  late String _operateText = ''; // 保存加减乘除
+
+  void onValueChange(String value) {
+    // ignore: avoid_print
+    print(value);
+    String tmpText = _text;
+    String tmpBeforeText = _beforeText;
+    bool tmpIsResult = _isResult;
+    String tmpOperateText = _operateText;
+
+    switch (value) {
+      case 'AC':
+        setState(() {
+          _text = '0';
+          _beforeText = '0';
+          _isResult = false;
+        });
+        break;
+      case '+/-':
+        if (tmpText.startsWith('-')) {
+          tmpText = tmpText.substring(1);
+        } else {
+          tmpText = '-$tmpText';
+        }
+        // 更新数据
+        setState(() {
+          _text = tmpText;
+        });
+        break;
+      case '%':
+        double d = _value2Double(tmpText);
+        tmpIsResult = true;
+        tmpText = '${d / 100.0}';
+        // 更新数据
+        setState(() {
+          _text = tmpText;
+          _isResult = tmpIsResult;
+        });
+        break;
+      case '+':
+      case '-':
+      case 'x':
+      case '÷':
+        tmpIsResult = false;
+        tmpOperateText = value;
+        setState(() {
+          _operateText = tmpOperateText;
+          _isResult = tmpIsResult;
+        });
+        break;
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+      case '.':
+        if (tmpIsResult) {
+          tmpText = value;
+        }
+        if (tmpOperateText.isNotEmpty && tmpBeforeText.isEmpty) {
+          tmpBeforeText = tmpText;
+          tmpText = '';
+        }
+        tmpText += value;
+        if (tmpText.startsWith('0')) {
+          tmpText = tmpText.substring(1);
+        }
+
+        // 更新数据
+        setState(() {
+          _text = tmpText;
+          _beforeText = tmpBeforeText;
+        });
+        break;
+      case '=':
+        double d = _value2Double(tmpBeforeText);
+        double d1 = _value2Double(tmpText);
+
+        switch (tmpOperateText) {
+          case '+':
+            tmpText = '${d + d1}';
+            break;
+          case '-':
+            tmpText = '${d - d1}';
+            break;
+          case 'x':
+            tmpText = '${d * d1}';
+            break;
+          case '÷':
+            tmpText = '${d / d1}';
+            break;
+        }
+        // 更新数据
+        setState(() {
+          _text = tmpText;
+          _beforeText = '';
+          _operateText = '';
+          _isResult = true;
+        });
+        break;
+      default:
+        break;
+    }
+  }
+
+  double _value2Double(String value) {
+    if (value.startsWith('-')) {
+      String s = value.substring(1);
+      return double.parse(s) * -1;
+    } else {
+      return double.parse(value);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,8 +173,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 alignment: Alignment.bottomRight,
                 padding: const EdgeInsets.only(right: 10),
                 child: Text(
-                  '$_counter',
+                  _text,
                   maxLines: 1,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 48,
@@ -66,9 +188,7 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(
               height: 20,
             ),
-            _CalculatorKeyboard(onValueChange: (String str) {
-              print(str);
-            }),
+            _CalculatorKeyboard(onValueChange: onValueChange),
             const SizedBox(
               height: 80,
             ),
